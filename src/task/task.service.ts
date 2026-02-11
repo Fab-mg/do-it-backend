@@ -5,12 +5,14 @@ import { Task } from './entity/task.entity';
 import { CreateTaskDto } from './dto/create.task.dto';
 import UpdateTaskDto from './dto/update.task.dto';
 import FindAllQueryDto from './dto/find.all.query.dto';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class TaskService {
   constructor(
     @Inject('TASK_REPOSITORY')
     private taskRepository: MongoRepository<Task>,
+    private readonly userService: UserService,
   ) {}
 
   async findAllOrSearch(findAllQueryDTO: FindAllQueryDto): Promise<Task[]> {

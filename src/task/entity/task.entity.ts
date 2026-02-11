@@ -1,4 +1,5 @@
 import { TaskStatus } from 'src/enum/tast.status.enum';
+import { User } from 'src/user/entity/user.entity';
 import {
   Entity,
   ObjectId,
@@ -28,6 +29,12 @@ export class Task {
   //   this.completed = false;
   // }
 
+  @Column({ type: 'date', default: new Date() })
+  expectedFinish: Date = new Date();
+
+  @Column({ type: 'date' })
+  finishedAt: Date;
+
   @UpdateDateColumn()
   updatedAt: Date;
 
@@ -36,4 +43,7 @@ export class Task {
 
   @Column()
   deletedAt: Date;
+
+  @Column((type) => User)
+  author: User;
 }

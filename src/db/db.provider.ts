@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
+import { appConstants } from 'src/constants';
 
 const configService = new ConfigService();
 
@@ -9,8 +10,8 @@ export const databaseProviders = [
     useFactory: async () => {
       const dataSource = new DataSource({
         type: 'mongodb',
-        url: configService.get<string>('DB_URL_STRING'),
-        database: configService.get<string>('DB_NAME') || 'do-it-db',
+        url: appConstants.dbUrlString,
+        database: appConstants.dbName,
         synchronize: true,
         entities: [__dirname + '/../**/*.entity.{ts,js}'],
       });
