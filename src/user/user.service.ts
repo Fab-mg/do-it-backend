@@ -1,10 +1,10 @@
 import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { MongoRepository } from 'typeorm';
-import { compare, hash } from 'bcryptjs';
+import { hash } from 'bcryptjs';
 import { User } from './entity/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import { LoginUserDto } from '../auth/dto/login-user.dto';
 import { SafeUser } from '../types/safe.user.type';
+import { ObjectId } from 'mongodb';
 
 const SALT_ROUNDS = 10;
 
@@ -49,11 +49,13 @@ export class UserService {
     if (email.length <= 1) {
       return null;
     }
-    return await this.userRepository.findOneBy({ email });
+    return await this.userRepository.findOneBy({ email: email });
   }
 
-  async findUserById(userId: String): Promise<SafeUser | null> {
-    const user = await this.userRepository.findOneBy({ _id: userId });
+  async findUserById(userId: string): Promise<SafeUser | null> {
+    const user = await this.userRepository.findOneBy({
+      _id: new ObjectId(userId),
+    });
     if (user) {
       return this.toSafeUser(user);
     } else {

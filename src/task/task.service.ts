@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { MongoRepository } from 'typeorm';
 import { ObjectId } from 'mongodb';
 import { Task } from './entity/task.entity';
@@ -6,6 +6,9 @@ import { CreateTaskDto } from './dto/create.task.dto';
 import UpdateTaskDto from './dto/update.task.dto';
 import FindAllQueryDto from './dto/find.all.query.dto';
 import { UserService } from 'src/user/user.service';
+import { User } from 'src/user/entity/user.entity';
+import { SafeUser } from 'src/types/safe.user.type';
+import { FindByStatusDto } from './dto/find.by.status.dto';
 
 @Injectable()
 export class TaskService {
@@ -15,7 +18,18 @@ export class TaskService {
     private readonly userService: UserService,
   ) {}
 
-  async findAllOrSearch(findAllQueryDTO: FindAllQueryDto): Promise<Task[]> {
+  async verifyUser(userId: string): Promise<SafeUser> {
+    const user = await this.userService.findUserById(userId);
+    if (!user) {
+      throw new HttpException('User verification failed', 500);
+    }
+    return user;
+  }
+
+  async findAllOrSearch(
+    findAllQueryDTO: FindAllQueryDto,
+    userId: string,
+  ): Promise<Task[]> {
     let page: number;
     let limit: number;
     if (findAllQueryDTO.page && parseInt(findAllQueryDTO.page) < 1) {
@@ -29,34 +43,87 @@ export class TaskService {
       limit = parseInt(findAllQueryDTO.limit);
     }
     const skip = (page - 1) * limit;
+    let user = await this.verifyUser(userId);
 
     const where = findAllQueryDTO.search
       ? { title: { $regex: findAllQueryDTO.search, $options: 'i' } }
       : undefined;
+    if (where) {
+      author: user;
+    }
+    const [tasks] = await this.taskRepository.findAndCount({
+      where,
+      skip,
+      take: limit,
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+    return tasks;
+  }
+
+  async findByStatus(
+    findByStatusDto: FindByStatusDto,
+    userId: string,
+  ): Promise<Task[]> {
+    let page: number;
+    let limit: number;
+    if (findByStatusDto.page && findByStatusDto.page < 1) {
+      page = 1;
+    } else {
+      page = findByStatusDto.page;
+    }
+    if (findByStatusDto.pageSize && findByStatusDto.pageSize < 1) {
+      limit = 1;
+    } else {
+      limit = findByStatusDto.pageSize;
+    }
+    const skip = (page - 1) * limit;
+    let user = await this.verifyUser(userId);
+    const where = { author: user, status: findByStatusDto.status };
 
     const [tasks] = await this.taskRepository.findAndCount({
       where,
       skip,
       take: limit,
+      order: {
+        createdAt: 'DESC',
+      },
     });
-
     return tasks;
   }
 
-  async findById(id: string): Promise<Task> {
+  async findById(id: string, userId: string): Promise<Task> {
+    await this.verifyUser(userId);
     return this.taskRepository.findOneBy({ _id: new ObjectId(id) });
   }
 
-  async create(createTaskDto: CreateTaskDto): Promise<Task | null> {
-    const savedTask = await this.taskRepository.save(createTaskDto);
+  async create(
+    createTaskDto: CreateTaskDto,
+    userId: string,
+  ): Promise<Task | null> {
+    const user = await this.verifyUser(userId);
+    let taskCtt = {
+      ...createTaskDto,
+      ...(createTaskDto.expectedFinish && {
+        expectedFinish: new Date(createTaskDto.expectedFinish),
+      }),
+      author: user,
+    };
+    console.log('🚀 ~ TaskService ~ create ~ taskCtt:', taskCtt);
+    const savedTask = await this.taskRepository.save(taskCtt);
     if (!savedTask) {
-      console.error('Failed to save task:', createTaskDto);
-      return null;
+      throw new HttpException('Failed to save task', 500);
     }
-    return this.findById(savedTask._id.toString());
+    return this.findById(savedTask._id.toString(), userId);
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
+  async update(
+    id: string,
+    updateTaskDto: UpdateTaskDto,
+    userId: string,
+  ): Promise<Task> {
+    await this.verifyUser(userId);
     await this.taskRepository.update(id, updateTaskDto);
     return this.taskRepository.findOneBy({ _id: new ObjectId(id) });
   }

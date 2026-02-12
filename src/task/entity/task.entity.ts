@@ -24,10 +24,10 @@ export class Task {
   @Column({ type: 'enum', enum: TaskStatus, default: TaskStatus.ONGOING })
   status: TaskStatus = TaskStatus.ONGOING;
 
-  // @BeforeInsert()
-  // beforeInsertActions() {
-  //   this.completed = false;
-  // }
+  @BeforeInsert()
+  beforeInsertActions() {
+    this.status = TaskStatus.ONGOING;
+  }
 
   @Column({ type: 'date', default: new Date() })
   expectedFinish: Date = new Date();
