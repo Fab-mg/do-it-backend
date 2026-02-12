@@ -26,7 +26,7 @@ export class Task {
 
   @BeforeInsert()
   beforeInsertActions() {
-    this.status = TaskStatus.ONGOING;
+    if (!this.status) this.status = TaskStatus.ONGOING;
   }
 
   @Column({ type: 'date', default: new Date() })

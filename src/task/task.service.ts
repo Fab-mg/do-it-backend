@@ -9,6 +9,7 @@ import { UserService } from 'src/user/user.service';
 import { User } from 'src/user/entity/user.entity';
 import { SafeUser } from 'src/types/safe.user.type';
 import { FindByStatusDto } from './dto/find.by.status.dto';
+import { TaskStatus } from 'src/enum/tast.status.enum';
 
 @Injectable()
 export class TaskService {
@@ -45,12 +46,12 @@ export class TaskService {
     const skip = (page - 1) * limit;
     let user = await this.verifyUser(userId);
 
-    const where = findAllQueryDTO.search
-      ? { title: { $regex: findAllQueryDTO.search, $options: 'i' } }
+    const where = {
+      author: user,
+    };
+    findAllQueryDTO.search
+      ? (where['title'] = { $regex: findAllQueryDTO.search, $options: 'i' })
       : undefined;
-    if (where) {
-      author: user;
-    }
     const [tasks] = await this.taskRepository.findAndCount({
       where,
       skip,
@@ -108,6 +109,7 @@ export class TaskService {
       ...(createTaskDto.expectedFinish && {
         expectedFinish: new Date(createTaskDto.expectedFinish),
       }),
+      status: TaskStatus.ONGOING,
       author: user,
     };
     console.log('🚀 ~ TaskService ~ create ~ taskCtt:', taskCtt);
