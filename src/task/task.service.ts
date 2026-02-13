@@ -128,6 +128,9 @@ export class TaskService {
   ): Promise<Task> {
     await this.verifyUser(userId);
     await this.taskRepository.update(id, updateTaskDto);
+    if (updateTaskDto.status == TaskStatus.FINISHED) {
+      await this.taskRepository.update(id, { finishedAt: new Date() });
+    }
     return this.taskRepository.findOneBy({ _id: new ObjectId(id) });
   }
 
