@@ -50,7 +50,6 @@ export class UserService {
       this.taskService.create(exampleTask, createdUser._id.toString()),
     );
     await Promise.all(promises);
-
     return this.toSafeUser(createdUser);
   }
 
