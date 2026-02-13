@@ -1,4 +1,4 @@
-import { HttpException, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, HttpException, Inject, Injectable } from '@nestjs/common';
 import { MongoRepository } from 'typeorm';
 import { ObjectId } from 'mongodb';
 import { Task } from './entity/task.entity';
@@ -16,6 +16,7 @@ export class TaskService {
   constructor(
     @Inject('TASK_REPOSITORY')
     private taskRepository: MongoRepository<Task>,
+    @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
   ) {}
 
