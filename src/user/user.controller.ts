@@ -40,4 +40,10 @@ export class UserController {
   async getUserById(@Param(':userId') userId: string) {
     return this.userService.findUserById(userId);
   }
+
+  @Post('test-mail')
+  @HttpCode(200)
+  async sendTEstMail() {
+    return this.userService.sendTestEmail();
+  }
 }

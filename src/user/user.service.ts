@@ -7,6 +7,8 @@ import { SafeUser } from '../types/safe.user.type';
 import { ObjectId } from 'mongodb';
 import { TaskService } from 'src/task/task.service';
 import { exampleData } from 'src/db/example.data';
+import { confirmEmailMSG } from 'src/utils/confirmEmail.msg';
+import { sendEmail } from 'src/utils/mailer';
 
 const SALT_ROUNDS = 10;
 
@@ -69,5 +71,16 @@ export class UserService {
     } else {
       return null;
     }
+  }
+
+  async sendTestEmail() {
+    const mailParams = {
+      to: 'lucfabior@yopmail.com',
+      subject: 'Test subject',
+      text: 'Confirm email code',
+      html: confirmEmailMSG.replace('CODE', '210354'),
+    };
+    const res = await sendEmail(mailParams);
+    console.log('🚀 ~ UserService ~ sendTestEmail ~ res:', res);
   }
 }
